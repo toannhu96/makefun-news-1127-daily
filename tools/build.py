@@ -105,9 +105,11 @@ def main():
     f_title = ImageFont.truetype(SERIF_B, 62)
     f_date = ImageFont.truetype(SANS_B, 17)
     f_tag = ImageFont.truetype(SANS_B, 13)
-    f_head = ImageFont.truetype(SERIF_B, 24)
-    f_body = ImageFont.truetype(SANS, 16)
-    f_src = ImageFont.truetype(SANS, 13)
+    f_head = ImageFont.truetype(SERIF_B, 23)
+    f_body = ImageFont.truetype(SANS, 15)
+    f_lead = ImageFont.truetype(SERIF_B, 38)
+    f_lead_body = ImageFont.truetype(SANS, 18)
+    f_src = ImageFont.truetype(SANS, 14)
     f_foot = ImageFont.truetype(SANS, 13)
 
     M = 32
@@ -123,38 +125,54 @@ def main():
     d.text((W // 2, 120), date, font=f_date, fill=MUTED, anchor="mt")
     d.rectangle([M, 148, W - M, 149], fill=INK)
 
-    # Cards: 2 columns x 3 rows
-    gap = 16
-    cw = (W - 2 * M - gap) // 2
-    top, bottom = 164, 962
-    ch = (bottom - top - 2 * gap) // 3
-    pad = 16
-    need_contrast(INK, CARD, "headline")
-    need_contrast(MUTED, CARD, "body/source")
-    need_contrast(WHITE, RED, "tag")
+    # Layout: full-width lead, then a row of 3 and a row of 2.
+    gap = 14
+    top, bottom = 162, 960
+    lead_h = 206
+    row_h = (bottom - top - lead_h - 2 * gap) // 2
+    full = W - 2 * M
+    c3 = (full - 2 * gap) // 3
+    c2 = (full - gap) // 2
+    slots = [(M, top, full, lead_h, True)]
+    y2 = top + lead_h + gap
+    slots += [(M + k * (c3 + gap), y2, c3, row_h, False) for k in range(3)]
+    y3 = y2 + row_h + gap
+    slots += [(M + k * (c2 + gap), y3, c2, row_h, False) for k in range(2)]
+    assert y3 + row_h <= bottom + 1, "cards overflow the page area"
+    assert len(slots) == len(STORIES)
 
-    for i, (tag, head, body, src, col) in enumerate(STORIES):
-        x = M + (i % 2) * (cw + gap)
-        y = top + (i // 2) * (ch + gap)
-        d.rectangle([x, y, x + cw, y + ch], fill=CARD, outline=INK, width=2)
+    need_contrast(INK, CARD, "headline/body")
+    need_contrast(MUTED, CARD, "source")
+    pad = 18
+    bar = 8
+
+    for i, ((tag, head, body, src, col), (x, y, w, h, lead)) in enumerate(zip(STORIES, slots)):
+        d.rectangle([x, y, x + w, y + h], fill=CARD, outline=INK, width=2)
+        d.rectangle([x, y, x + w, y + bar], fill=col)  # colour-coded top bar
         need_contrast(WHITE, col, f"tag colour {tag}")
+        fh = f_lead if lead else f_head
+        fb = f_lead_body if lead else f_body
+        lead_lh, body_lh = (44, 26) if lead else (29, 22)
+        iw = w - 2 * pad
         tw = int(d.textlength(tag, font=f_tag)) + 16
-        d.rectangle([x + pad, y + pad, x + pad + tw, y + pad + 22], fill=col)
-        d.text((x + pad + 8, y + pad + 4), tag, font=f_tag, fill=WHITE)
-        iw = cw - 2 * pad
-        hl = wrap(d, head, f_head, iw, 2, f"headline {i}")
-        cy = draw_lines(d, x + pad, y + pad + 32, hl, f_head, INK, 30)
-        bl = wrap(d, body, f_body, iw, 4, f"body {i}")
-        cy = draw_lines(d, x + pad, cy + 4, bl, f_body, INK, 21)
-        need_contrast(INK, CARD, "body")
-        src_text = "Reported by " + src
+        ty = y + bar + 14
+        d.rectangle([x + pad, ty, x + pad + tw, ty + 22], fill=col)
+        d.text((x + pad + 8, ty + 4), tag, font=f_tag, fill=WHITE)
+        if lead:
+            d.text((x + w - pad, ty + 4), "LEAD STORY", font=f_tag, fill=MUTED, anchor="ra")
+        hl = wrap(d, head, fh, iw, 2 if lead else 3, f"headline {i}")
+        cy = draw_lines(d, x + pad, ty + 34, hl, fh, INK, lead_lh)
+        bl = wrap(d, body, fb, iw, 3 if lead else 6, f"body {i}")
+        cy = draw_lines(d, x + pad, cy + 8, bl, fb, INK, body_lh)
+        src_text = "Source: " + src
         assert d.textlength(src_text, font=f_src) <= iw, f"source {i} overflows"
-        sy = y + ch - pad - 15
-        assert cy <= sy, f"card {i}: text collides with source line ({cy} > {sy})"
+        sy = y + h - pad - 14
+        assert cy + 6 <= sy, f"card {i}: text collides with source line ({cy} > {sy})"
+        d.rectangle([x + pad, sy - 8, x + w - pad, sy - 7], fill=(205, 198, 184))
         d.text((x + pad, sy), src_text, font=f_src, fill=MUTED)
 
     # Footer
-    foot = "Compiled 27 Nov 2026 from The Standard (Hong Kong) and SBS News (Seoul) reports. Events as reported Thursday 26 Nov."
+    foot = "Compiled 27 Nov 2026 from The Standard (Hong Kong) and SBS News (Seoul). Events as reported Thu 26 Nov."
     need_contrast(MUTED, PAPER, "footer")
     assert d.textlength(foot, font=f_foot) <= W - 2 * M, "footer overflows"
     d.text((W // 2, 984), foot, font=f_foot, fill=MUTED, anchor="mt")
