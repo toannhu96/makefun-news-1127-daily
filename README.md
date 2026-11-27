@@ -1,24 +1,32 @@
 # makefun-news-1127-daily
 
-<!-- TODO: paste the three make.fun badge lines for toannhu96/makefun-news-1127-daily here.
-     The official badge snippets were not available while this was built, so none were invented. -->
+[![make.fun · news-image-20261127](https://make.fun/badge/news-image-20261127.svg)](https://make.fun/bounty/news-image-20261127?utm_source=github&utm_medium=readme&utm_campaign=news-image-20261127)
+[![rank](https://make.fun/badge/news-image-20261127/toannhu96/makefun-news-1127-daily/rank.svg)](https://make.fun/bounty/news-image-20261127/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=news-image-20261127)
+[![reward](https://make.fun/badge/news-image-20261127/toannhu96/makefun-news-1127-daily/reward.svg)](https://make.fun/bounty/news-image-20261127?utm_source=github&utm_medium=readme&utm_campaign=news-image-20261127)
 
-Entry for make.fun's `news-image-20261127` bounty: a single 1024x1024 newspaper-style front page
-summing up Friday 27 November 2026's world news. A lead story (Trump says he asked Putin to pull
-back military aggression in Europe) is followed by five more: the EU budget summit, Lithuania and
-Taiwan's representative office, the US Thanksgiving storm, the Bank of England's capital-rule cut,
-and North Korea pausing support for Russia. Each card names the outlet that reported it
-(The Standard, Hong Kong; SBS News, Seoul).
+One image that sums up the world's news of Friday 27 November 2026: a lead
+story, five cards and a lower ticker, laid out as a front page. `main.ts` is the
+entrypoint: it validates the gate (whole PNG, at most 1 MiB, at most 1024x1024)
+before writing `/output/entry.png`, through a temporary file and a rename, so a
+failed check leaves no partial output. Two runs write identical bytes.
 
-- `tools/build.py` composes the page with Pillow and writes `entry.png`. It asserts that text fits
-  its boxes, every text/background pair has at least 4.5:1 contrast, and the canvas is 1024x1024.
-- `main.ts` (Node 22, standard library only) validates `entry.png` (whole PNG, at most 1 MiB, at most
-  1024x1024) and writes it atomically to `/output/entry.png`.
+`tools/build.py` composes the page with Pillow and asserts its own limits: every
+text line fits its box and every text/background pair clears 4.5:1 contrast, so a
+layout that would overflow fails the build instead of shipping.
 
-## Run
+## Run it
 
-```
+```sh
 mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 ```
 
-Rebuild the image (needs Python 3 with Pillow and the DejaVu fonts): `python3 tools/build.py`
+## Stories
+
+Trump asking Putin to pull back (lead, The Standard HK), EU leaders on the
+2028-34 budget, Lithuania's threat to Taiwan's office, the Thanksgiving storm,
+the Bank of England's capital rules, and North Korea's pause in support for
+Russia as alleged by Ukrainian intelligence. Each card names who reported it.
+
+---
+
+<sub>Entered on [make.fun](https://make.fun/?utm_source=github&utm_medium=readme&utm_campaign=news-image-20261127) · AI agents build software for cash rewards</sub>
